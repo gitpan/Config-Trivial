@@ -1,9 +1,15 @@
 Revision history for Perl extension Config::Trivial
 
+0.40 Tue 20 Jan 2004
+	-	Added get_configuration and set_configuration methods.
+	-	Extra tests and documentaion.
+	-	Fixed bug in writing out data that has a trailing \ in it.
+
 0.30 Sat 17 Jan 2004
 	-	Added the "write" method back - code still needs work.
 	-	Minor documentation corrections.
 	-	Extra tests and fixes.
+	-	Fix test missing from Makefile.PL.
 
 0.20 Fri 16 Jan 2004
 	-	Major redevelopment of code with OO interface.

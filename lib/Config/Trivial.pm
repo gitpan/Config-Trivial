@@ -27,7 +27,7 @@ use warnings;
 use diagnostics;
 use Carp;
 
-our $VERSION = "0.30";
+our $VERSION = "0.40";
 my ($_package, $_file) = caller;
 
 #
@@ -118,7 +118,7 @@ sub set_config_file {
 The read method opens the file, and parses the configuration returning the
 results as a reference to an hash. If the file cannot be read it will die.
 
-  my $settings = $config->read();
+  my $settings = $config->read;
 
 Alternatively if you only want a single configuration value you can pass just
 that key, and get back it's matching value.
@@ -126,12 +126,13 @@ that key, and get back it's matching value.
   my $colour = $config->read("colour");
 
 Each call to read will make the module re-read and parse the configuration file.
+If you want to re-read data from the oject use the get_configuration method.
 
 =cut
 
 sub read {
 	my $self = shift;
-	my $key  = shift;	# If there is a key return only it's value
+	my $key  = shift;	# If there is a key, return only it's value
 
 	return undef unless $self->_check_file($self->{_config_file});
 
@@ -160,6 +161,63 @@ sub read {
 
 
 #
+#	GET_CONFIGURATION
+#
+
+=head2 get_configuration
+
+This method simply returns the value requested or a hash reference
+of the configuration data. It does NOT perform a re-read of the
+data on the disk.
+
+  $settings = $config->get_configuration;
+
+or
+
+  $colour = $config->get_configuration{"colour"};
+
+=cut
+
+sub get_configuration {
+	my $self = shift;
+	my $key  = shift;
+
+	return $self->{_configuration}->{$key} if $key;
+	return $self->{_configuration};
+}
+
+
+#
+#	SET_CONFIGURATION
+#
+
+=head2 set_configuration
+
+If you need to set the configuration object with data you can
+pass in a reference to a hash with this method. Any existing
+data will be over-written. Returns false on failure.
+
+  $config->set_configuration(\%settings);
+
+or
+
+  $config->set_configuration($hash_ref);
+
+=cut
+
+sub set_configuration {
+	my $self = shift;
+	my $hash = shift;
+
+	return $self->_raise_error("No configuration data") unless $hash;
+	return $self->_raise_error("Configuration data isn't a hash reference") unless ref $hash eq "HASH";
+
+	$self->{_configuration} = $hash;
+	return $self;
+}
+
+
+#
 #	WRITE
 #
 
@@ -183,6 +241,12 @@ then it is backed up first. The write is not "atomic" or
 locked for reading in anyway. If the file cannot be written to
 then it will die.
 
+Configuration data passed by this method is only written to
+file, it is not stored in the internal configuration object.
+To store data in the internal use the set_configuration data
+method. The option to pass a hash_ref in this method may
+be removed in future versions.
+
 =cut
 
 sub write {
@@ -190,7 +254,10 @@ sub write {
 	my %args = @_;
 
 	my $file = $args{"config_file"} || $self->{_config_file};
-	return $self->_raise_error("Not allowed to write to the calling file.") if $_file eq $file;
+	if (($_file eq $file) ||
+	    ($0 eq $file)) {
+		return $self->_raise_error("Not allowed to write to the calling file.")
+	};
 
     if (-e $file) {
 		croak "ERROR: Insufficient permissions to write to: $file" unless (-w $file);
@@ -209,10 +276,12 @@ sub write {
 			$setting =~ s/ /_/g;
 			croak "ERROR: Unable to fix space in key, replacement key exists already" if $settings->{$setting};
 			$settings->{$old_setting} = " " unless $settings->{$old_setting};
+			$settings->{$old_setting} =~ s/\\\s*$/\\ #/;
 			printf CONF "$setting%s$settings->{$old_setting}\n", length($old_setting) >= 8 ? "\t" : "\t\t";
 			next;
 		}
 		$settings->{$setting} = " " unless $settings->{$setting};
+		$settings->{$setting} =~ s/\\\s*$/\\ #/;
 		printf CONF "$setting%s$settings->{$setting}\n", length($setting) >= 8 ? "\t" : "\t\t"
 	}
 
@@ -232,7 +301,8 @@ sub write {
 In normal operation the module will only die if it is unable to read
 or write the configuration file, or an invalid file is set in the
 constructor. Other errors are non-fatal. If an error occurs it can
-be read with the get_error method.
+be read with the get_error method. Only the most recent error is
+stored.
 
   my $settings = $config->read();
   print get_error unless $settings;
@@ -404,8 +474,8 @@ Adam Trickett, E<lt>atrickett@cpan.orgE<gt>
 
 =head1 SEE ALSO
 
-L<perl>, L<ConfigReader::Simple>, L<Config::Ini>, L<Config::General>
-and L<Config::IniFiles>.
+L<perl>, L<ConfigReader::Simple>, L<Config::Ini>, L<Config::General>,
+L<Config::Tiny> and L<Config::IniFiles>.
 
 This module is based on an earlier module I wrote. It was never
 released to the public via CPAN, but I did post a version of it
