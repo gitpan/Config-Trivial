@@ -1,8 +1,6 @@
 use strict;
-use Test;
-use Pod::Coverage;
+use Test::More tests => 1;
+use Test::Pod;
 
-plan tests => 1;
+pod_file_ok("./lib/Config/Trivial.pm", "Valid POD file" );
 
-my $pc = Pod::Coverage->new(package => 'Config::Trivial');
-ok($pc->coverage == 1);

@@ -4,8 +4,8 @@ BEGIN { plan tests => 4 }
 
 use Config::Trivial;
 
-ok(1);		
-ok($Config::Trivial::VERSION eq "0.20");
+ok(1);
+ok($Config::Trivial::VERSION eq "0.30");
 
 my $config = Config::Trivial->new;
 ok(defined $config);

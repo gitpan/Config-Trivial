@@ -1,13 +1,19 @@
-Config::Trivial Version 0.20
+Config::Trivial Version 0.30
 ============================
 
-This is "Yest Another" simple module to read (and write)
+This is "Yet Another" simple module to read (and write)
 trivial configuration files. The files are very simple,
 simply consisting of key values pairs separated by the
 first space.
 
 It is based on an earlier (unpublished) module called
 Config-SimpleConf.
+
+ALSO SEE
+
+There are LOTS of other configuration reading and writing
+modules on CPAN, please check them all carefully before
+installing this one.
 
 INSTALLATION
 

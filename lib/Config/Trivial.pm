@@ -27,7 +27,7 @@ use warnings;
 use diagnostics;
 use Carp;
 
-our $VERSION = "0.20";
+our $VERSION = "0.30";
 my ($_package, $_file) = caller;
 
 #
@@ -45,6 +45,7 @@ file to be the file name of the file that called it.
   $config = Config::Trivial->new();
 
 or
+
   $config = Config::Trivial->new(
     config_file => "/my/config/file",
     debug       => "on",
@@ -69,7 +70,9 @@ sub new {
 		_debug			=>	$args{debug}	|| 0,			# Debugging (verbose) mode
 		_strict			=>	$args{strict}	|| 0,			# Strict mode
 		_error_message	=>  "",								# Error Messages
-		_configuration  =>  {}								# Where the configuration data goes
+		_configuration  =>  {},								# Where the configuration data goes
+		_backup_char	=>	"~",							# Backup marker
+		_separator		=>	" "
 	}, ref($class) || $class;
 
 	if ($args{config_file}) {
@@ -130,7 +133,6 @@ sub read {
 	my $self = shift;
 	my $key  = shift;	# If there is a key return only it's value
 
-#	return $self->_raise_error("File error: No file name supplied") unless $self->{_config_file};
 	return undef unless $self->_check_file($self->{_config_file});
 
 #	Open up the configuration file and process it
@@ -163,9 +165,62 @@ sub read {
 
 =head2 write
 
-This method has not yet been ported across from the original module.
+The write method simply writes the configuration hash back out
+to the configuration file. It will try to not write to a file if
+it has the same filename of the script that called it. This can
+easily be bypassed, and bad things will happen!
+
+There are two optional parameters that can be passed, a file
+name to use instead of the current one, and a reference of a
+hash to write out instead of the currently loaded one.
+
+  $config->write(
+    file_name => "/path/to/somewhere/else",
+    configuration => $settings);
+
+The method returns true on success. If the file already exists
+then it is backed up first. The write is not "atomic" or
+locked for reading in anyway. If the file cannot be written to
+then it will die.
 
 =cut
+
+sub write {
+	my $self = shift;
+	my %args = @_;
+
+	my $file = $args{"config_file"} || $self->{_config_file};
+	return $self->_raise_error("Not allowed to write to the calling file.") if $_file eq $file;
+
+    if (-e $file) {
+		croak "ERROR: Insufficient permissions to write to: $file" unless (-w $file);
+		rename $file, $file.$self->{_backup_char} or croak "ERROR: Unable to rename $file.";
+	}
+
+	open CONF, ">", $file or croak "ERROR: Unable to write configuration file: $file";
+	print CONF "#\n#\tConfig file written by $_file\n#\tUsing Config::Trivial version $VERSION\n#\n\n";
+
+	my $settings = $args{"configuration"} || $self->{_configuration};
+	foreach my $setting (keys %$settings) {
+		if ($setting =~ / /) {	# Check for spaces in keys
+			croak "ERROR: Setting key \"$setting\" contains an illegal space" if $self->{_strict};
+			carp "WARNING: Setting key \"$setting\" contains an illegal space" if $self->{_debug};
+			my $old_setting = $setting;
+			$setting =~ s/ /_/g;
+			croak "ERROR: Unable to fix space in key, replacement key exists already" if $settings->{$setting};
+			$settings->{$old_setting} = " " unless $settings->{$old_setting};
+			printf CONF "$setting%s$settings->{$old_setting}\n", length($old_setting) >= 8 ? "\t" : "\t\t";
+			next;
+		}
+		$settings->{$setting} = " " unless $settings->{$setting};
+		printf CONF "$setting%s$settings->{$setting}\n", length($setting) >= 8 ? "\t" : "\t\t"
+	}
+
+	my $time = localtime;
+	print CONF "\n#\n#\tThis file written at $time\n#\n";
+	close CONF;
+	return 1;
+}
 
 
 #
@@ -175,9 +230,9 @@ This method has not yet been ported across from the original module.
 =head2 get_error
 
 In normal operation the module will only die if it is unable to read
-the configuration file, or an invalid file is set in the constructor.
-Other errors are non-fatal. If an error occurs it can be read with
-the get_error method.
+or write the configuration file, or an invalid file is set in the
+constructor. Other errors are non-fatal. If an error occurs it can
+be read with the get_error method.
 
   my $settings = $config->read();
   print get_error unless $settings;
@@ -229,10 +284,10 @@ sub _process_line {
 	my $self    = shift;
 	my $line    = shift;
 	my $line_no = shift;
-										# Clean up the line
+
 	chomp $line;						# Take the end off
-	$line =~ s/^\s+|\s+$|#+.*$//go;		# Remove comments, and spaces at start or end
-	$line =~ s/\s+/ /go;				# Convert multiple whitespace to one space globally
+	$line =~ s/^\s+|\s+$|\s*#+.*$//g;	# Remove comments, and spaces at start or end
+	$line =~ s/\s+/ /g;					# Convert multiple whitespace to one space globally
 	return unless $line;				# Return if nothing is left
 
 	my ($key, $value) = split / /, $line, 2;
@@ -287,6 +342,11 @@ If you delete a key/value pair it will not be written out when you do a write.
 When a key has an undef value, the key will be written out with no matching
 value. When you read a key with no value in, in debug mode you will get a warning.
 
+You can continue configuration data over several lines, in a shell like manner,
+by placing a backslash at the end of the line followed by a new line. White space
+between the backslash and the new line will be ignored and also trigger line
+continuation.
+
 =head2 Sample Configuration File
 
   #
@@ -326,15 +386,11 @@ Patches Welcome... ;-)
 
 =item *
 
-Write method not yet re-implemented.
-
-=item *
-
 Much better test suite.
 
 =item *
 
-Ensure FULL compatability with C<Conf::SimpleConf>.
+Ensure FULL compatibility with C<Conf::SimpleConf>.
 
 =back
 
@@ -348,8 +404,8 @@ Adam Trickett, E<lt>atrickett@cpan.orgE<gt>
 
 =head1 SEE ALSO
 
-C<perl>, C<ConfigReader::Simple>, C<Config::Ini>, C<Config::General>
-and C<Config::IniFiles>.
+L<perl>, L<ConfigReader::Simple>, L<Config::Ini>, L<Config::General>
+and L<Config::IniFiles>.
 
 This module is based on an earlier module I wrote. It was never
 released to the public via CPAN, but I did post a version of it
@@ -362,7 +418,7 @@ Previous version as C<Config::SimpleConf>, Copyright iredale consulting 2001-200
 
 This version as C<Config::Trivial>, Copyright iredale consulting 2004
 
-Portions from C<XML::RSS::Tools>, Copyright iredale consulting 2002-2004
+Portions from L<XML::RSS::Tools>, Copyright iredale consulting 2002-2004
 
 OSI Certified Open Source Software.
 

@@ -1,7 +1,7 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 17 };
+BEGIN { plan tests => 20 };
 
 use Config::Trivial;
 ok(1);
@@ -11,40 +11,49 @@ ok(1);
 #
 my $config = Config::Trivial->new;
 
-# Missing file (2-3)
+# Try and write to self (2-3)
+ok(! $config->write );
+ok($config->get_error(), "Not allowed to write to the calling file.");
+
+# Missing file (4-5)
 ok(! $config->set_config_file("./t/file.that.is.not.there")); 
 ok($config->get_error(), "File error: Cannot find ./t/file.that.is.not.there");
 
-# Not a file (4-5)
+# Not a file (6-7)
 ok(! $config->set_config_file("./t"));
 ok($config->get_error(), "File error: ./t isn't a real file");
 
-# Empty filename (6-7)
+# Empty filename (8-9)
 ok(! $config->set_config_file(""));
 ok($config->get_error(), "File error: No file name supplied");
 
-# Empty file (8-9)
+# Empty file (10-11)
 ok(! $config->set_config_file("./t/empty"));
 ok($config->get_error(), "File error: ./t/empty is zero bytes long");
 
-# duped keys, normal mode (10-12)
+# duped keys, normal mode (12-14)
 ok($config->set_config_file("./t/bad.data"));
 ok(my $settings = $config->read());
 ok($settings->{test1}, "bar");
 
-# duped keys, strict mode (13-15)
 $settings = undef;
 $config = Config::Trivial->new(strict => "on");
+
+# Try and write to self (15)
+eval { $config->write };
+ok($@ =~ "Not allowed to write to the calling file.");
+
+# duped keys, strict mode (16-18)
 ok($config->set_config_file("./t/bad.data"));
 eval { $settings = $config->read(); };
 ok(! defined($settings->{test1}));
 ok($@ =~ 'ERROR: Duplicate key "test1" found in config file on line 4');
 
-# Missing File, Strict mode (16)
+# Missing File, Strict mode (19)
 eval { $config->set_config_file("./t/file.that.is.not.there"); };
 ok($@ =~ "File error: Cannot find ./t/file.that.is.not.there");
 
-# Empty file, Strict mode (17)
+# Empty file, Strict mode (20)
 eval { $config->set_config_file("./t/empty"); };
 ok($@ =~ "File error: ./t/empty is zero bytes long");
 

@@ -3,11 +3,11 @@ use strict;
 use 5.006;
 
 my @tests;
-my $test_list = 't/00-use.t t/01-basic.t t/02-read.t';
+my $test_list = 't/00-use.t t/01-basic.t t/02-read.t t/03-error.t t/04-write.t';
 eval { require Test::Pod; };
-$test_list .= ' t/04-pod.t' unless ($@);
-eval { require Pod::Coverage; };
 $test_list .= ' t/05-pod.t' unless ($@);
+eval { require Pod::Coverage; };
+$test_list .= ' t/06-pod.t' unless ($@);
 push @tests, test => { TESTS => $test_list};
 
 WriteMakefile(
