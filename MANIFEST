@@ -1,0 +1,15 @@
+
+MANIFEST
+Changes
+Makefile.PL
+README
+lib/Config/Trivial.pm
+t/00-use.t
+t/01-basic.t
+t/02-read.t
+t/03-error.t
+t/04-pod.t
+t/05-pod.t
+t/test.data
+t/bad.data
+t/empty

@@ -1,0 +1,10 @@
+test1	foo
+test2	bar \
+bar
+Test3	baz
+
+test_a	foo
+
+__END__
+
+test4	foo

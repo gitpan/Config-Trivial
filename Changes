@@ -1,0 +1,18 @@
+Revision history for Perl extension Config::Trivial
+
+0.20 Fri 15 Jan 2004
+	-	Major redevelopment of code with OO interface.
+	-	A number of functions from the original module
+		have been remove, or not yet re-implemented.
+
+As Config::SimpleConf
+
+0.10 Sat Apr 06 2002
+	-	Added ability to work with a reference to a provided hash,
+		rather than just %settings.
+		Minor additions to the test script, and updates to the POD.
+
+0.08 Mon Nov 05 2001
+	-	Dirty mode added, can now de-taint quite dirty data.
+		More small changes to the test script.
+
