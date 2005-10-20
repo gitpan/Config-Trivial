@@ -1,7 +1,7 @@
-
 MANIFEST
 Changes
 Makefile.PL
+Build.PL
 README
 lib/Config/Trivial.pm
 t/00-use.t
@@ -11,6 +11,9 @@ t/03-error.t
 t/04-write.t
 t/05-pod.t
 t/06-pod.t
+t/07-warn.t
+t/08-pod.t
 t/test.data
 t/bad.data
 t/empty
+META.yml

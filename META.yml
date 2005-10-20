@@ -1,0 +1,17 @@
+name:         Config-Trivial
+version:      0.50
+license: gpl
+version_from: lib/Config/Trivial.pm
+installdirs:  site
+requires:
+  perl: 5.6.1
+build_requires:
+  Test: 0
+conflicts: {}
+provides:
+  Config::Trivial:
+    file: lib/Config/Trivial.pm
+    version: 0.50
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.17

@@ -1,3 +1,5 @@
+# $Id: Makefile.PL,v 1.4 2005/10/18 20:29:52 adam Exp $
+
 use ExtUtils::MakeMaker;
 use strict;
 use 5.006;
@@ -8,12 +10,18 @@ eval { require Test::Pod; };
 $test_list .= ' t/05-pod.t' unless ($@);
 eval { require Pod::Coverage; };
 $test_list .= ' t/06-pod.t' unless ($@);
+eval { require IO::Capture; };
+$test_list .= ' t/07-warn.t' unless ($@);
+eval { require Test::Pod::Coverage; };
+$test_list .= ' t/08-pod.t' unless ($@);
+
 push @tests, test => { TESTS => $test_list};
 
 WriteMakefile(
     'NAME'          => 'Config::Trivial',
     'VERSION_FROM'  => 'lib/Config/Trivial.pm',
     'PREREQ_PM'     => {}, 
+	'PL_FILES'      => {},
 	@tests,
      dist           => {
        COMPRESS      => 'gzip -9f',

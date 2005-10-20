@@ -1,3 +1,5 @@
+#	$Id: test.data,v 1.2 2004/02/14 16:14:45 adam Exp $
+
 test1	foo
 test2	bar \
 bar

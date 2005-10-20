@@ -1,3 +1,5 @@
+#	$Id: 06-pod.t,v 1.2 2004/02/14 16:14:45 adam Exp $
+
 use strict;
 use Test;
 use Pod::Coverage;

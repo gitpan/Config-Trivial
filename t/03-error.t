@@ -1,3 +1,4 @@
+#	$Id: 03-error.t,v 1.3 2004/02/14 16:21:19 adam Exp $
 use strict;
 use Test;
 
@@ -56,7 +57,7 @@ ok($@ =~ "Not allowed to write to the calling file.");
 ok($config->set_config_file("./t/bad.data"));
 eval { $settings = $config->read(); };
 ok(! defined($settings->{test1}));
-ok($@ =~ 'ERROR: Duplicate key "test1" found in config file on line 4');
+ok($@ =~ 'ERROR: Duplicate key "test1" found in config file on line 5');
 
 # Missing File, Strict mode (23)
 eval { $config->set_config_file("./t/file.that.is.not.there"); };

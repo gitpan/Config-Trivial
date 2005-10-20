@@ -1,3 +1,5 @@
+#	$Id: Trivial.pm,v 1.4 2005/10/18 20:30:03 adam Exp $
+
 =head1 NAME
 
 Config::Trivial - Very simple tool for reading and writing very simple configuration files
@@ -27,7 +29,7 @@ use warnings;
 use diagnostics;
 use Carp;
 
-our $VERSION = "0.40";
+our $VERSION = "0.50";
 my ($_package, $_file) = caller;
 
 #
@@ -341,7 +343,7 @@ sub _raise_error {
 	my $self    = shift;
 	my $message = shift;
 	croak $message if $self->{_strict};			# STRICT: die with the message
-	warn $message if $self->{_debug};			# DEBUG:  warn with the message
+	carp  $message if $self->{_debug};			# DEBUG:  warn with the message
 	$self->{_error_message} = $message;			# NORMAL: set the message
 	return undef;
 }
@@ -417,6 +419,9 @@ by placing a backslash at the end of the line followed by a new line. White spac
 between the backslash and the new line will be ignored and also trigger line
 continuation.
 
+If you need to have a backslash at the end of your data, for example a windows
+path, then place a # mark after your backslash.
+
 =head2 Sample Configuration File
 
   #
@@ -428,6 +433,7 @@ continuation.
   over several lines
   value-1 is foo
   value-1 is bar
+  path \ #
   __END__
   value-1 is baz
 
@@ -484,9 +490,9 @@ Other versions of this are also available if anyone wants to see them.
 
 =head1 COPYRIGHT
 
-Previous version as C<Config::SimpleConf>, Copyright iredale consulting 2001-2003
+This version as C<Config::Trivial>, Copyright iredale consulting 2004-2005
 
-This version as C<Config::Trivial>, Copyright iredale consulting 2004
+Previous version as C<Config::SimpleConf>, Copyright iredale consulting 2001-2003
 
 Portions from L<XML::RSS::Tools>, Copyright iredale consulting 2002-2004
 
