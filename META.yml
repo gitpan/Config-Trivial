@@ -1,17 +1,14 @@
-name:         Config-Trivial
-version:      0.50
+---
+name: Config-Trivial
+version: 0.51
+author:
+  - 'Adam Trickett, E<lt>atrickett@cpan.orgE<gt>'
+abstract: Very simple tool for reading and writing very simple configuration files
 license: gpl
-version_from: lib/Config/Trivial.pm
-installdirs:  site
 requires:
   perl: 5.6.1
-build_requires:
-  Test: 0
-conflicts: {}
 provides:
   Config::Trivial:
     file: lib/Config/Trivial.pm
-    version: 0.50
-
-distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.17
+    version: 0.51
+generated_by: Module::Build version 0.26

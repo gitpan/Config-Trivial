@@ -1,4 +1,4 @@
-#	$Id: Trivial.pm,v 1.4 2005/10/18 20:30:03 adam Exp $
+#	$Id: Trivial.pm,v 1.5 2005/10/21 16:43:46 adam Exp $
 
 =head1 NAME
 
@@ -29,7 +29,7 @@ use warnings;
 use diagnostics;
 use Carp;
 
-our $VERSION = "0.50";
+our $VERSION = "0.51";
 my ($_package, $_file) = caller;
 
 #
