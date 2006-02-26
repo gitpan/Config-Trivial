@@ -1,4 +1,366 @@
-#	$Id: Trivial.pm,v 1.5 2005/10/21 16:43:46 adam Exp $
+#   $Id: Trivial.pm,v 1.13 2006-02-24 22:01:17 adam Exp $
+
+package Config::Trivial;
+
+use 5.006;
+use strict;
+use warnings;
+#use diagnostics;
+use Carp;
+
+our $VERSION = '0.60';
+my ( $_package, $_file ) = caller;
+
+#
+#   NEW
+#
+
+sub new {
+    my $class  = shift;
+    my %args   = @_;
+    my $object = bless {
+        _config_file   => $_file,       # The Config file, default is caller
+        _self          => 1,            # Set Self Read
+        _error_message => q{},          # Error Messages
+        _configuration => {},           # Where the configuration data goes
+        _backup_char   => q{~},         # Backup marker
+        _separator     => q{ },         # Separator
+        _multi_file    => 0,            # Multi file mode
+        _debug  => $args{debug} || 0,   # Debugging (verbose) mode
+        _strict => $args{strict} || 0,  # Strict mode
+        },
+        ref $class || $class;
+
+    if ( $args{config_file} ) {
+        croak "Unable to read config file $args{config_file}"
+            unless set_config_file( $object, $args{config_file} );
+    }
+    return $object;
+}
+
+#
+#   SET_CONFIG_FILE
+#
+
+sub set_config_file {
+    my $self               = shift;
+    my $configuration_file = shift;
+
+    if ( ref $configuration_file ) {
+        if ( ref $configuration_file eq 'HASH' ) {
+            foreach my $sub_config_file ( sort keys %{$configuration_file} ) {
+                my $config_file = $configuration_file->{$sub_config_file};
+                if ( $config_file ) {
+                    if (! $self->_check_file($config_file) ) {
+                        return;
+                    }
+                }
+                else {
+                    return $self->_raise_error('File error: No file name supplied')
+                }
+            }
+            $self->{_config_file} = $configuration_file;
+            $self->{_self}        = 0;
+            $self->{_multi_file}  = 1;
+            return $self;
+        }
+        else {
+            croak 'ERROR: Can only deal with a hash references';
+        }
+    }
+    else {
+        if ( $self->_check_file($configuration_file) ) {
+            $self->{_config_file} = $configuration_file;
+            $self->{_self}        = 0;
+            $self->{_multi_file}  = 0;
+            return $self;
+        }
+        else {
+            return;
+        }
+    }
+}
+
+#
+#   READ
+#
+
+sub read {
+    my $self = shift;
+    my $key  = shift;    # If there is a key, return only it's value
+
+    if ( $self->{_multi_file} ) {
+        croak 'ERROR: Read can only deal with a single file';
+    }  
+
+    $self->_read_config( $self->{_config_file});
+
+    return $self->{_configuration}->{$key} if $key;
+    return $self->{_configuration};
+}
+
+
+#
+#   MULTI_READ
+#
+
+sub multi_read {
+    my $self = shift;
+    my $hash = shift;   # If there is specific hash, return only it's value
+
+    if ( ! $self->{_multi_file} ) {
+        croak 'ERROR: Multi_Read is for multiple configuration files';
+    }
+
+    foreach my $config_key ( keys %{$self->{_config_file}} ) {
+        my $config_file = $self->{_config_file}->{$config_key};
+        $self->_read_config( $config_file, $config_key );
+#        return unless $self->_check_file( $config_file );
+    }
+
+    return $self->{_configuration}->{$hash} if $hash;
+    return $self->{_configuration};
+}
+
+#
+#   GET_CONFIGURATION
+#
+
+sub get_configuration {
+    my $self = shift;
+    my $key  = shift;
+
+    return $self->{_configuration}->{$key} if $key;
+    return $self->{_configuration};
+}
+
+#
+#   SET_CONFIGURATION
+#
+
+sub set_configuration {
+    my $self = shift;
+    my $hash = shift;
+
+    return $self->_raise_error('No configuration data')
+        unless $hash;
+    return $self->_raise_error('Configuration not a reference')
+        unless ref $hash;
+    return $self->_raise_error(q{Configuration data isn't a hash reference})
+        unless ref $hash eq 'HASH';
+
+    $self->{_configuration} = $hash;
+    return $self;
+}
+
+#
+#   WRITE
+#
+
+sub write {
+    my $self = shift;
+    my %args = @_;
+
+    my $settings = $args{'configuration'} || $self->{_configuration};
+
+    croak 'ERROR: No settings hash to write.'
+        unless $settings;
+    croak 'ERROR: Settings not a hashref.'
+        unless ref $settings eq 'HASH';
+
+    my $file = $args{'config_file'} || $self->{_config_file};
+
+    if ( $file ) {
+        if (   ( $_file eq $file )
+            || ( $0 eq $file ) )
+        {
+            return $self->_raise_error(
+                'Not allowed to write to the calling file.');
+        }
+    }
+    else {
+        croak 'File error: No file name supplied';
+    }
+
+    if ( -e $file ) {
+        croak "ERROR: Insufficient permissions to write to: $file"
+            unless ( -w $file );
+        rename $file, $file . $self->{_backup_char}
+            or croak "ERROR: Unable to rename $file.";
+    }
+
+    open my $config, '>', $file
+        or croak "ERROR: Unable to write configuration file: $file";
+    print {$config}
+        "#\n#\tConfig file written by $_file\n#\tUsing Config::Trivial version $VERSION\n#\n\n";
+
+    foreach my $setting ( keys %{$settings} ) {
+        if ( $setting =~ / / ) {                    # Check for spaces in keys
+            croak "ERROR: Setting key \"$setting\" contains an illegal space"
+                if $self->{_strict};
+            carp "WARNING: Setting key \"$setting\" contains an illegal space"
+                if $self->{_debug};
+            my $old_setting = $setting;
+            $setting =~ s/ /_/g;
+            croak 'ERROR: Unable to fix space in key, replacement key exists already'
+                if $settings->{$setting};
+            $settings->{$old_setting} = q{ } unless $settings->{$old_setting};
+            $settings->{$old_setting} =~ s/\\\s*$/\\ #/;
+            printf {$config} "$setting%s$settings->{$old_setting}\n",
+                length $old_setting >= 8 ? "\t" : "\t\t";
+            next;
+        }
+        $settings->{$setting} = q{ } unless $settings->{$setting};
+        $settings->{$setting} =~ s/\\\s*$/\\ #/;
+        printf {$config} "$setting%s$settings->{$setting}\n",
+            length $setting >= 8 ? "\t" : "\t\t";
+    }
+
+    my $time = localtime;
+    print {$config} "\n#\n#\tThis file written at $time\n#\n";
+    close $config;
+    return 1;
+}
+
+#
+#   GET_ERROR
+#
+
+sub get_error {
+    my $self = shift;
+    return $self->{_error_message};
+}
+
+#   #################
+#   Private Functions
+#   #################
+
+#
+#   Perform some file checks
+#
+
+sub _check_file {
+    my $self = shift;
+    my $file = shift;
+    
+    return $self->_raise_error('File error: No file name supplied')
+        unless $file;
+    return $self->_raise_error("File error: Cannot find $file")
+        unless -e $file;
+    return $self->_raise_error("File error: $file isn't a real file")
+        unless -f _;
+    return $self->_raise_error("File error: Cannot read file $file")
+        unless -r _;
+    return $self->_raise_error("File error: $file is zero bytes long")
+        if -z _;
+    return $self;
+}
+
+#
+#   Open and read an individual config file
+#
+
+sub _read_config {
+    my $self  = shift;
+    my $file  = shift;
+    my $f_key = shift;
+
+    return unless $self->_check_file( $file );
+
+    open my $config, '<', $file
+        or croak "ERROR: Unable to open configuration file: $file";
+
+    if ( $self->{_self} )
+    {    # We are now parsing the calling file for it's __DATA__ section
+        while ( <$config> ) {
+            last if /^__DATA__\s*$/;
+        }
+    }
+    while ( <$config> ) {
+        next if /^\s*#/;                    # Skip comment lines starting #
+        next if /^\s*\n/;                   # Skip any empty lines
+        last if /^__END__\s*$/;             # Don't care what comes after this
+        if ( s/\\\s*$// ) {                 # Look for a continuation character
+            $_ .= <$config>;                # If found then glue the lines together
+            redo unless eof $config;
+        }
+        $self->_process_line( $_, $., $f_key );    # Send the line off for processing
+    }
+    close $config;
+    return;
+}
+
+#
+#   Raise error condition
+#
+sub _raise_error {
+    my $self    = shift;
+    my $message = shift;
+
+    croak $message if $self->{_strict};    # STRICT: die with the message
+    carp $message  if $self->{_debug};     # DEBUG:  warn with the message
+    $self->{_error_message} = $message;    # NORMAL: set the message
+    return;
+}
+
+#
+#   Parse a line and add to Config structure
+#
+sub _process_line {
+    my $self    = shift;
+    my $line    = shift;
+    my $line_no = shift;
+    my $f_key   = shift;
+
+    chomp $line;
+    $line =~ s/^\s+|\s+$|\s*#+.*$//g;       # Remove comments, and spaces at start or end
+    $line =~ s/\s+/ /g;                     # Multiple whitespace to one space globally
+
+    my ( $key, $value ) = split / /, $line, 2;
+    $key = lc _clean_string( $key );
+    if ( exists $self->{_configuration}->{$key} ) {
+        croak "ERROR: Duplicate key \"$key\" found in config file on line $line_no"
+            if $self->{_strict};
+        carp "WARNING: Duplicate key \"$key\" found in config file on line $line_no"
+            if $self->{_debug};
+    }
+    if ($key) {
+        if (defined $value) {
+            if ($f_key) {
+                $self->{_configuration}->{$f_key}->{$key} = $value;
+            }
+            else {
+                $self->{_configuration}->{$key} = $value;
+            }
+        }
+        else {
+            carp "WARNING: Key \"$key\" has no valid value, on line $line_no of the config file"
+                if $self->{_debug};
+            $self->{_configuration}->{$key} = undef unless $self->{_strict};
+        }
+    }
+    return;
+}
+
+#
+#   Clean data up to make a key out of it
+#
+sub _clean_string {
+    my $input = shift;
+    my $output;
+
+    $input =~ tr/\e\`\'"%//ds;                              # Remove less gross crud from the input
+    $output = $1
+        if ( $input =~ /^([\^\$-=\?\/\w.:\\\s\@~\|]+)$/ );  # De-Taint the input line
+    $output =~ s/^\s+|\s+$//g if $output;                   # Remove spaces at start or end
+    return $output;
+}
+
+1;
+
+
+__END__
+
 
 =head1 NAME
 
@@ -19,22 +381,6 @@ weight configuration file reader. The module simply returns a
 reference to a single hash for you to read configuration values
 from, and uses the same hash to write a new config file.
 
-=cut
-
-package Config::Trivial;
-
-use 5.006;
-use strict;
-use warnings;
-use diagnostics;
-use Carp;
-
-our $VERSION = "0.51";
-my ($_package, $_file) = caller;
-
-#
-#	NEW
-#
 
 =head1 METHODS
 
@@ -61,33 +407,6 @@ strict mode all warnings become fatal.
 If you set a file in the constructor that is invalid for any reason
 it will die in any mode - this may change in a later version.
 
-=cut
-
-sub new {
-	my $class = shift;
-	my %args  = @_;
-	my $object = bless {
-		_config_file	=>	$_file,							# The Config file, default is caller
-		_self			=>	1,								# Set Self Read
-		_debug			=>	$args{debug}	|| 0,			# Debugging (verbose) mode
-		_strict			=>	$args{strict}	|| 0,			# Strict mode
-		_error_message	=>  "",								# Error Messages
-		_configuration  =>  {},								# Where the configuration data goes
-		_backup_char	=>	"~",							# Backup marker
-		_separator		=>	" "
-	}, ref($class) || $class;
-
-	if ($args{config_file}) {
-		croak "Unable to read config file $args{config_file}" unless set_config_file($object, $args{config_file});
-	}
-	return $object;
-}
-
-
-#
-#	SET_CONFIG_FILE
-#
-
 =head2 set_config_file
 
 The configuration file can be set after the constructor has been called.
@@ -97,23 +416,14 @@ the error message.
 
   $config->set_config_file("/path/to/file");
 
-=cut
+You may also set a collection of configuration files by passing a reference
+to a hash. They keys will be used to extract data, and the values of the
+hash will contain the files that you wish to use.
 
-sub set_config_file {
-	my $self = shift;
-	my $configuration_file = shift;
-	if ($self->_check_file($configuration_file)) {
-		$self->{_config_file} = $configuration_file;
-		$self->{_self} = 0;
-		return $self;
-	} else {
-		return undef;
-	}
-}
-
-#
-#	READ
-#
+  %config_files = (
+    master_config    => "/path/to/master.conf",
+    secondary_config => "/path/to/second/conf");
+  $config->set_config_file(\%config_files);
 
 =head2 read
 
@@ -130,42 +440,6 @@ that key, and get back it's matching value.
 Each call to read will make the module re-read and parse the configuration file.
 If you want to re-read data from the oject use the get_configuration method.
 
-=cut
-
-sub read {
-	my $self = shift;
-	my $key  = shift;	# If there is a key, return only it's value
-
-	return undef unless $self->_check_file($self->{_config_file});
-
-#	Open up the configuration file and process it
-	open CONF, "<", $self->{_config_file} or croak "ERROR: Unable to open configuration file: $self->{_config_file}";
-
-	if ($self->{_self}) {							# We are now parsing the calling file for it's __DATA__ section
-		while (<CONF>) {
-			last if /^__DATA__\s*$/;
-		}
-	}
-	while (<CONF>) {
-		next if /^\s*#/;							# Skip comment lines starting #
-		next if /^\s*\n/;							# Skip any empty lines
-		last if /^__END__\s*$/;						# Don't care what comes after this
-		if (s/\\\s*$//) {							# Look for a continuation character
-			$_ .= <CONF>;							# If found then glue the lines together
-			redo unless eof CONF;
-		}
-		_process_line ($self, $_, $.);				# Send the line off for processing
-		}
-	close CONF;
-	return $self->{_configuration}->{$key} if $key;
-	return $self->{_configuration};
-}
-
-
-#
-#	GET_CONFIGURATION
-#
-
 =head2 get_configuration
 
 This method simply returns the value requested or a hash reference
@@ -178,20 +452,19 @@ or
 
   $colour = $config->get_configuration{"colour"};
 
-=cut
+If your configuration data is from muliple files, then passing a key
+will return a hash reference of the "key" file requested rather than
+an indiviudal value.
 
-sub get_configuration {
-	my $self = shift;
-	my $key  = shift;
+=head2 multi_read
 
-	return $self->{_configuration}->{$key} if $key;
-	return $self->{_configuration};
-}
+This method is used to read a multiple set of configutaion files in one go.
 
+  my $settings = $config->multi_read;
 
-#
-#	SET_CONFIGURATION
-#
+Alternativly you can return just one hash of one configutation file with.
+
+  my $master = $config->multi_read("master_config");
 
 =head2 set_configuration
 
@@ -205,24 +478,6 @@ or
 
   $config->set_configuration($hash_ref);
 
-=cut
-
-sub set_configuration {
-	my $self = shift;
-	my $hash = shift;
-
-	return $self->_raise_error("No configuration data") unless $hash;
-	return $self->_raise_error("Configuration data isn't a hash reference") unless ref $hash eq "HASH";
-
-	$self->{_configuration} = $hash;
-	return $self;
-}
-
-
-#
-#	WRITE
-#
-
 =head2 write
 
 The write method simply writes the configuration hash back out
@@ -235,7 +490,7 @@ name to use instead of the current one, and a reference of a
 hash to write out instead of the currently loaded one.
 
   $config->write(
-    file_name => "/path/to/somewhere/else",
+    config_file => "/path/to/somewhere/else",
     configuration => $settings);
 
 The method returns true on success. If the file already exists
@@ -249,55 +504,6 @@ To store data in the internal use the set_configuration data
 method. The option to pass a hash_ref in this method may
 be removed in future versions.
 
-=cut
-
-sub write {
-	my $self = shift;
-	my %args = @_;
-
-	my $file = $args{"config_file"} || $self->{_config_file};
-	if (($_file eq $file) ||
-	    ($0 eq $file)) {
-		return $self->_raise_error("Not allowed to write to the calling file.")
-	};
-
-    if (-e $file) {
-		croak "ERROR: Insufficient permissions to write to: $file" unless (-w $file);
-		rename $file, $file.$self->{_backup_char} or croak "ERROR: Unable to rename $file.";
-	}
-
-	open CONF, ">", $file or croak "ERROR: Unable to write configuration file: $file";
-	print CONF "#\n#\tConfig file written by $_file\n#\tUsing Config::Trivial version $VERSION\n#\n\n";
-
-	my $settings = $args{"configuration"} || $self->{_configuration};
-	foreach my $setting (keys %$settings) {
-		if ($setting =~ / /) {	# Check for spaces in keys
-			croak "ERROR: Setting key \"$setting\" contains an illegal space" if $self->{_strict};
-			carp "WARNING: Setting key \"$setting\" contains an illegal space" if $self->{_debug};
-			my $old_setting = $setting;
-			$setting =~ s/ /_/g;
-			croak "ERROR: Unable to fix space in key, replacement key exists already" if $settings->{$setting};
-			$settings->{$old_setting} = " " unless $settings->{$old_setting};
-			$settings->{$old_setting} =~ s/\\\s*$/\\ #/;
-			printf CONF "$setting%s$settings->{$old_setting}\n", length($old_setting) >= 8 ? "\t" : "\t\t";
-			next;
-		}
-		$settings->{$setting} = " " unless $settings->{$setting};
-		$settings->{$setting} =~ s/\\\s*$/\\ #/;
-		printf CONF "$setting%s$settings->{$setting}\n", length($setting) >= 8 ? "\t" : "\t\t"
-	}
-
-	my $time = localtime;
-	print CONF "\n#\n#\tThis file written at $time\n#\n";
-	close CONF;
-	return 1;
-}
-
-
-#
-#	GET_ERROR
-#
-
 =head2 get_error
 
 In normal operation the module will only die if it is unable to read
@@ -308,91 +514,6 @@ stored.
 
   my $settings = $config->read();
   print get_error unless $settings;
-
-=cut
-
-sub get_error {
-	my $self = shift;
-	return $self->{_error_message};
-}
-
-#
-#	Private Functions
-#
-
-#
-#	Perform some file checks
-#
-
-sub _check_file {
-	my $self = shift;
-	my $file = shift;
-	return $self->_raise_error("File error: No file name supplied") unless $file;
-	return $self->_raise_error("File error: Cannot find $file") unless -e $file;
-	return $self->_raise_error("File error: $file isn't a real file") unless -f _;
-	return $self->_raise_error("File error: Cannot read file $file") unless -r _;
-	return $self->_raise_error("File error: $file is zero bytes long") if -z _;
-	return $self;
-}
-
-
-#
-#	Raise error condition
-#
-sub _raise_error {
-	my $self    = shift;
-	my $message = shift;
-	croak $message if $self->{_strict};			# STRICT: die with the message
-	carp  $message if $self->{_debug};			# DEBUG:  warn with the message
-	$self->{_error_message} = $message;			# NORMAL: set the message
-	return undef;
-}
-
-
-#
-#	Parse a line and add to Config structure
-#
-sub _process_line {
-	my $self    = shift;
-	my $line    = shift;
-	my $line_no = shift;
-
-	chomp $line;						# Take the end off
-	$line =~ s/^\s+|\s+$|\s*#+.*$//g;	# Remove comments, and spaces at start or end
-	$line =~ s/\s+/ /g;					# Convert multiple whitespace to one space globally
-	return unless $line;				# Return if nothing is left
-
-	my ($key, $value) = split / /, $line, 2;
-	$key = lc _clean_string($key);
-	if (exists $self->{_configuration}->{$key}) {
-		croak "ERROR: Duplicate key \"$key\" found in config file on line $line_no" if $self->{_strict};
-		carp  "WARNING: Duplicate key \"$key\" found in config file on line $line_no" if $self->{_debug};
-	}
-	if ($key) {
-		if ($value) {
-			$self->{_configuration}->{$key} = $value;
-		} else {
-			carp "WARNING: Key \"$key\" has no valid value, on line $line_no of the config file" if $self->{_debug};
-			$self->{_configuration}->{$key} = $value unless $self->{_strict};
-		}
-	}
-}
-
-#
-#	Clean data up to make a key out of it
-#
-sub _clean_string {
-	my $input = shift;
-	my $output;
-	$input =~ tr/\e\`\'"%//ds;										# Remove less gross crud from the input
-	$output = $1 if ($input =~ /^([\^\$-=\?\/\w.:\\\s\@~\|]+)$/);   # De-Taint the input line
-	$output =~ s/^\s+|\s+$//g if $output;							# Remove spaces at start or end
-	return $output;
-}
-
-1;
-
-__END__
 
 =head1 CONFIG FORMAT
 
@@ -466,7 +587,7 @@ Much better test suite.
 
 =item *
 
-Ensure FULL compatibility with C<Conf::SimpleConf>.
+Multi-write option
 
 =back
 
@@ -480,21 +601,15 @@ Adam Trickett, E<lt>atrickett@cpan.orgE<gt>
 
 =head1 SEE ALSO
 
-L<perl>, L<ConfigReader::Simple>, L<Config::Ini>, L<Config::General>,
-L<Config::Tiny> and L<Config::IniFiles>.
-
-This module is based on an earlier module I wrote. It was never
-released to the public via CPAN, but I did post a version of it
-on PerlMonks:  http://www.perlmonks.org/index.pl?node_id=113685
-Other versions of this are also available if anyone wants to see them.
+L<perl>, L<Config::Trivial::Storable>, L<ConfigReader::Simple>,
+L<Config::Ini>, L<Config::General>, L<Config::Tiny>
+and L<Config::IniFiles>.
 
 =head1 COPYRIGHT
 
-This version as C<Config::Trivial>, Copyright iredale consulting 2004-2005
+C<Config::Trivial>, Copyright iredale consulting 2004-2006
 
-Previous version as C<Config::SimpleConf>, Copyright iredale consulting 2001-2003
-
-Portions from L<XML::RSS::Tools>, Copyright iredale consulting 2002-2004
+Portions from C<Config::SimpleConf> and L<XML::RSS::Tools>, Copyright iredale consulting
 
 OSI Certified Open Source Software.
 
@@ -511,6 +626,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-MA  02111, USA.
+MA 02111, USA.
 
 =cut

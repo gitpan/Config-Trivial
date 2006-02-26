@@ -1,8 +1,8 @@
-#	$Id: 04-write.t,v 1.2 2004/02/14 16:14:45 adam Exp $
+#	$Id: 04-write.t,v 1.3 2006-02-22 21:33:00 adam Exp $
 
 use strict;
 use Test;
-BEGIN { plan tests => 17 }
+BEGIN { plan tests => 19 }
 
 use Config::Trivial;
 
@@ -23,14 +23,18 @@ ok(-e "./t/test2.data");						# Was written out
 #
 
 $config = Config::Trivial->new();
-my $data = {test => "womble"};					# New Data
+my $data = {
+    test => "womble",
+    longer_key => "muppet",
+    'silly key' => 'fraggle'
+};					# New Data
 ok($config->write(
 	config_file => "./t/test3.data",		
 	configuration => $data));					# Write it too
 ok(-e "./t/test3.data");
 
 #
-#	Read things back (8-13)
+#	Read things back (8-15)
 #
 
 ok($config = Config::Trivial->new(
@@ -42,9 +46,10 @@ ok(-e "./t/test2.data~");
 ok($config = Config::Trivial->new(
     config_file => "./t/test3.data"));           # Create Config object
 ok($config->read("test"), "womble");
-
+ok($config->read('longer_key'), 'muppet');
+ok($config->read('silly_key'), 'fraggle');
 #
-#	Make sure we clean up (14-17)
+#	Make sure we clean up (16-19)
 #
 ok(unlink("./t/test2.data", "./t/test2.data~", "./t/test3.data"), 3);
 ok(! -e "./t/test2.data");

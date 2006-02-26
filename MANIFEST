@@ -9,11 +9,12 @@ t/01-basic.t
 t/02-read.t
 t/03-error.t
 t/04-write.t
-t/05-pod.t
-t/06-pod.t
-t/07-warn.t
-t/08-pod.t
+t/80-warn.t
+t/90-pod.t
+t/91-pod.t
+t/92-pod.t
 t/test.data
 t/bad.data
+t/second.data
 t/empty
 META.yml

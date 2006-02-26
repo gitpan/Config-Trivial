@@ -1,14 +1,19 @@
 ---
 name: Config-Trivial
-version: 0.51
+version: 0.60
 author:
   - 'Adam Trickett, E<lt>atrickett@cpan.orgE<gt>'
 abstract: Very simple tool for reading and writing very simple configuration files
 license: gpl
 requires:
   perl: 5.6.1
+build_requires:
+  IO::Capture: 0
+  Pod::Coverage: 0
+  Test::Pod: 0
+  Test::Pod::Coverage: 0
 provides:
   Config::Trivial:
     file: lib/Config/Trivial.pm
-    version: 0.51
+    version: 0.60
 generated_by: Module::Build version 0.26

@@ -1,4 +1,4 @@
-#	$Id: 06-pod.t,v 1.2 2004/02/14 16:14:45 adam Exp $
+#	$Id: 91-pod.t,v 1.1 2006-02-19 12:16:24 adam Exp $
 
 use strict;
 use Test;

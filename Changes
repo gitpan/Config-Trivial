@@ -1,6 +1,25 @@
-$Id: Changes,v 1.4 2005/10/21 16:43:41 adam Exp $
+$Id: Changes,v 1.10 2006-02-26 19:52:13 adam Exp $
 
 Revision history for Perl extension Config::Trivial
+
+0.60 Xxx XX Feb 2006
+    MAJOR REVISION
+    -   New Features:
+        -   Multi-file read/write
+            -   Multi-read implemented
+            *   Multi-write NOT YET IMPLEMENTED
+    -   Code Review:
+        -   Standardise on PBP guidelines using Perl::Critic
+        -   Wash module though perltidy using PBP settings
+        -   Several subtle bugs eliminated
+        -   Extra logic checks within code
+        -   Several no-ops removed
+	-	Tests:
+        -   Using ./build testcover (Devel::Cover) to improve test coverage
+        -   Many new tests and better tests
+        -   Reorderd and renamed tests
+    -   Using MANIFEST.SKIP to avoid help packaging errors
+    -   Doc updates and fix
 
 0.51 Fri 21 Oct 2005
 	-	Repackaged, no changes

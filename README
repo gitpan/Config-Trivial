@@ -1,15 +1,12 @@
-$Id: README,v 1.4 2005/10/21 16:43:41 adam Exp $
+$Id: README,v 1.6 2006-02-26 19:52:13 adam Exp $
 
-Config::Trivial Version 0.51
+Config::Trivial Version 0.60
 ============================
 
 This is "Yet Another" simple module to read (and write)
 trivial configuration files. The files are very simple,
 simply consisting of key values pairs separated by the
 first space.
-
-It is based on an earlier (unpublished) module called
-Config-SimpleConf.
 
 ALSO SEE
 
