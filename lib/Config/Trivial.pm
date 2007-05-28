@@ -1,4 +1,4 @@
-#   $Id: Trivial.pm,v 1.13 2006-02-24 22:01:17 adam Exp $
+#   $Id: Trivial.pm,v 1.15 2007-05-28 17:36:36 adam Exp $
 
 package Config::Trivial;
 
@@ -8,7 +8,7 @@ use warnings;
 #use diagnostics;
 use Carp;
 
-our $VERSION = '0.60';
+our $VERSION = '0.70';
 my ( $_package, $_file ) = caller;
 
 #
@@ -91,7 +91,7 @@ sub read {
 
     if ( $self->{_multi_file} ) {
         croak 'ERROR: Read can only deal with a single file';
-    }  
+    }
 
     $self->_read_config( $self->{_config_file});
 
@@ -242,7 +242,7 @@ sub get_error {
 sub _check_file {
     my $self = shift;
     my $file = shift;
-    
+
     return $self->_raise_error('File error: No file name supplied')
         unless $file;
     return $self->_raise_error("File error: Cannot find $file")
@@ -577,6 +577,8 @@ See Changes file.
 
 Patches Welcome... ;-)
 
+https://rt.cpan.org/Dist/Display.html?Queue=Config-Trivial
+
 =head2 To Do
 
 =over
@@ -607,7 +609,7 @@ and L<Config::IniFiles>.
 
 =head1 COPYRIGHT
 
-C<Config::Trivial>, Copyright iredale consulting 2004-2006
+C<Config::Trivial>, Copyright iredale consulting 2004-2007
 
 Portions from C<Config::SimpleConf> and L<XML::RSS::Tools>, Copyright iredale consulting
 
@@ -621,7 +623,7 @@ or (at your option) any later version.
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details. 
+GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software

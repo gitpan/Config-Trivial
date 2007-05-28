@@ -1,8 +1,8 @@
-#	$Id: 04-write.t,v 1.3 2006-02-22 21:33:00 adam Exp $
+#	$Id: 04-write.t,v 1.4 2007-05-28 17:11:41 adam Exp $
 
 use strict;
 use Test;
-BEGIN { plan tests => 19 }
+BEGIN { plan tests => 20 }
 
 use Config::Trivial;
 
@@ -48,6 +48,9 @@ ok($config = Config::Trivial->new(
 ok($config->read("test"), "womble");
 ok($config->read('longer_key'), 'muppet');
 ok($config->read('silly_key'), 'fraggle');
+
+ok($config->set_configuration($data));
+
 #
 #	Make sure we clean up (16-19)
 #

@@ -1,8 +1,14 @@
-#	$Id: Build.PL,v 1.3 2006-02-26 19:52:13 adam Exp $;
+#	$Id: Build.PL,v 1.4 2007-05-28 17:11:27 adam Exp $;
 
 use Module::Build;
 
 my @tests = qw(t/00-use.t t/01-basic.t t/02-read.t t/03-error.t t/04-write.t);
+
+eval { require Test::More; };
+push @tests, 't/60-distribution.t' unless ($@);
+
+eval { require YAML; };
+push @tests, 't/70-meta-yaml.t' unless ($@);
 
 eval { require IO::Capture; };
 push @tests, 't/80-warn.t' unless ($@);

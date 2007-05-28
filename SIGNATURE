@@ -1,0 +1,47 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.55.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It will check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 2fc076a23f2e6b68e21489ccc09d5c51421aa71a Build.PL
+SHA1 f34f3b98c2abbdbcda934d89819d6b463b69de26 Changes
+SHA1 7e5195f1f8df0c9f5af3713d7fb323008f101989 MANIFEST
+SHA1 efa8815004a4be8b2f4961c588b2cbc5e6dad180 META.yml
+SHA1 883c9c11dfd18f6e2ccbbe91381df6afe429a9f2 Makefile.PL
+SHA1 2d925d4be6b69d4232598bb63cc553a266a6427e README
+SHA1 e43bea1bd7477cff08f4d2d935a5af69015a082f examples/example.conf
+SHA1 db54bc40a5edb6288d38e10608c74b77ddc68c6a examples/example.pl
+SHA1 5bec8308f68861bb3c9077933c2530d931f8c3be lib/Config/Trivial.pm
+SHA1 711c985bb5c566c50c460d52f3a69e1f2b9a6cd1 t/00-use.t
+SHA1 9c2ef17428c42faee2c5728c9a1b97b14cdaa585 t/01-basic.t
+SHA1 68acd3278d7349f45eb1e8ce668f08ff5309edca t/02-read.t
+SHA1 36dffcc2ded472a4646bd2719943e3c204fb5142 t/03-error.t
+SHA1 a5d04c6730ee6138dca96d2700fd0ddef4bcd074 t/04-write.t
+SHA1 1bfcca11bd1ff065f3b9f4874da1f9a68c782798 t/60-distribution.t
+SHA1 acd0e4fa89b799ca43172c046a6807fcb9037d75 t/70-meta-yaml.t
+SHA1 5eb4405c2ee611d90c0ccfbbab4e55be6b4a00fc t/80-warn.t
+SHA1 d7594346716f374342df5536d0307f02cdc1c35d t/90-pod.t
+SHA1 9110c7f9e370908ece1464a95ba4d7859f4a631f t/91-pod.t
+SHA1 9bb13f9aada5b96e2f9cb7e0252e339ba7dab9a5 t/92-pod.t
+SHA1 563a7cb31da42cb3e512528090d7a5b3b1cd1d92 t/bad.data
+SHA1 da39a3ee5e6b4b0d3255bfef95601890afd80709 t/empty
+SHA1 b2bc56f403e723b967f92ac0c86f0dcc9b03e9a9 t/second.data
+SHA1 a926f16d8a837f20f6b3f1dded3fb9a5e928519f t/test.data
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQFGWxMnAZrQ2BZsS/ARAjv9AJ9EbeG0NIz6C0m5BJomt3aegDk9owCfdLKU
+yLHpaCYpqy62NLbx/pqqIVc=
+=RD89
+-----END PGP SIGNATURE-----
