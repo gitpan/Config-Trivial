@@ -1,14 +1,14 @@
-#   $Id: Trivial.pm,v 1.15 2007-05-28 17:36:36 adam Exp $
+#   $Id: Trivial.pm 48 2014-05-21 18:01:07Z adam $
 
 package Config::Trivial;
 
-use 5.006;
+use 5.010;		# May work on earlier perls but I've not tested
+use utf8;
 use strict;
 use warnings;
-#use diagnostics;
 use Carp;
 
-our $VERSION = '0.70';
+our $VERSION = '0.80';
 my ( $_package, $_file ) = caller;
 
 #
@@ -26,8 +26,9 @@ sub new {
         _backup_char   => q{~},         # Backup marker
         _separator     => q{ },         # Separator
         _multi_file    => 0,            # Multi file mode
-        _debug  => $args{debug} || 0,   # Debugging (verbose) mode
-        _strict => $args{strict} || 0,  # Strict mode
+        _debug    => $args{debug}    || 0, # Debugging (verbose) mode
+        _strict   => $args{strict}   || 0, # Strict mode
+        _no_check => $args{no_check} || 0, # Skip filesystem checks
         },
         ref $class || $class;
 
@@ -243,6 +244,12 @@ sub _check_file {
     my $self = shift;
     my $file = shift;
 
+#   Skip ALL checks if no_check is set
+    if ( $self->{'_no_check'} ) {
+        return $self;
+    }
+
+#   Check the filename before using - may be slow on some filesystems
     return $self->_raise_error('File error: No file name supplied')
         unless $file;
     return $self->_raise_error("File error: Cannot find $file")
@@ -311,13 +318,19 @@ sub _process_line {
     my $line    = shift;
     my $line_no = shift;
     my $f_key   = shift;
+    my ( $key, $value );
 
     chomp $line;
     $line =~ s/^\s+|\s+$|\s*#+.*$//g;       # Remove comments, and spaces at start or end
     $line =~ s/\s+/ /g;                     # Multiple whitespace to one space globally
 
-    my ( $key, $value ) = split / /, $line, 2;
-    $key = lc _clean_string( $key );
+    if ( $line ) {
+        ( $key, $value ) = split / /, $line, 2;
+    }
+    if ( $key ) {
+	no warnings "uninitialized";
+        $key = lc _clean_string( $key );
+    }
     if ( exists $self->{_configuration}->{$key} ) {
         croak "ERROR: Duplicate key \"$key\" found in config file on line $line_no"
             if $self->{_strict};
@@ -369,10 +382,10 @@ Config::Trivial - Very simple tool for reading and writing very simple configura
 =head1 SYNOPSIS
 
   use Config::Trivial;
-  my $config = Config::Trivial->new(config_file => "path/to/my/config.conf");
+  my $config = Config::Trivial->new(config_file => 'path/to/my/config.conf');
   my $settings = $config->read;
   print "Setting Colour is:\t", $settings->{'colour'};
-  $settings->{'new-item'} = "New Setting";
+  $settings->{'new-item'} = 'New Setting';
 
 =head1 DESCRIPTION
 
@@ -395,14 +408,17 @@ file to be the file name of the file that called it.
 or
 
   $config = Config::Trivial->new(
-    config_file => "/my/config/file",
-    debug       => "on",
-    strict      => "on");
+    config_file => '/my/config/file',
+    debug       => 'on',
+    strict      => 'on',
+    no_check    => 'on' );
 
-By default debug and strict are set to off. In debug mode messages
-and errors will be dumped automatically to STDERR. Normally messages
-and non-fatal errors need to be pulled from the error handler. In
-strict mode all warnings become fatal.
+By default debug, strict and no_check are set to off. In debug mode
+messages and errors will be dumped automatically to STDERR. Normally
+messages and non-fatal errors need to be pulled from the error handler. In
+strict mode all warnings become fatal. Turning no_check on disables
+file tests which may slow the module down if used over a slow network
+to a NFS or CIFS filesystem.
 
 If you set a file in the constructor that is invalid for any reason
 it will die in any mode - this may change in a later version.
@@ -435,7 +451,7 @@ results as a reference to an hash. If the file cannot be read it will die.
 Alternatively if you only want a single configuration value you can pass just
 that key, and get back it's matching value.
 
-  my $colour = $config->read("colour");
+  my $colour = $config->read('colour');
 
 Each call to read will make the module re-read and parse the configuration file.
 If you want to re-read data from the oject use the get_configuration method.
@@ -450,7 +466,7 @@ data on the disk.
 
 or
 
-  $colour = $config->get_configuration{"colour"};
+  $colour = $config->get_configuration{'colour'};
 
 If your configuration data is from muliple files, then passing a key
 will return a hash reference of the "key" file requested rather than
@@ -464,7 +480,7 @@ This method is used to read a multiple set of configutaion files in one go.
 
 Alternativly you can return just one hash of one configutation file with.
 
-  my $master = $config->multi_read("master_config");
+  my $master = $config->multi_read('master_config');
 
 =head2 set_configuration
 
@@ -490,11 +506,11 @@ name to use instead of the current one, and a reference of a
 hash to write out instead of the currently loaded one.
 
   $config->write(
-    config_file => "/path/to/somewhere/else",
+    config_file => '/path/to/somewhere/else',
     configuration => $settings);
 
 The method returns true on success. If the file already exists
-then it is backed up first. The write is not "atomic" or
+then it is backed up first. The write is not 'atomic' or
 locked for reading in anyway. If the file cannot be written to
 then it will die.
 
@@ -524,6 +540,9 @@ setting is stored as a key value pair separated by the first space. Empty
 lines are ignored and anything after a hash # is treated as a comment and
 is ignored. Depending upon mode, duplicate entries will be silently ignored,
 warned about, or cause the module to die.
+
+At the moment this module does not encode or decode data, data remains
+in perl native format.
 
 All key names are forced into lower case when read in, values are left intact.
 
@@ -607,27 +626,24 @@ L<perl>, L<Config::Trivial::Storable>, L<ConfigReader::Simple>,
 L<Config::Ini>, L<Config::General>, L<Config::Tiny>
 and L<Config::IniFiles>.
 
-=head1 COPYRIGHT
+=head1 LICENSE AND COPYRIGHT
 
-C<Config::Trivial>, Copyright iredale consulting 2004-2007
-
-Portions from C<Config::SimpleConf> and L<XML::RSS::Tools>, Copyright iredale consulting
+C<Config::Trivial>, Copyright iredale consulting 2004-2014
 
 OSI Certified Open Source Software.
+Free Software Foundation Free Software.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published
-by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-MA 02111, USA.
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 =cut

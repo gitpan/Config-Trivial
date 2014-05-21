@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+# $Id: example.pl 51 2014-05-21 19:14:11Z adam $
+
 use strict;
 use Config::Trivial;
 

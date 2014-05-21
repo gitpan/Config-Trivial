@@ -1,10 +1,19 @@
-#	$Id: 91-pod.t,v 1.1 2006-02-19 12:16:24 adam Exp $
+#	$Id: 91-pod.t 51 2014-05-21 19:14:11Z adam $
 
 use strict;
 use Test;
-use Pod::Coverage;
 
-plan tests => 1;
+my $run_tests;
+
+BEGIN {
+    $run_tests = eval { require Pod::Coverage; };
+    plan tests => 1
+};
+
+if (! $run_tests) {
+    skip "Pod::Coverage not installed, skipping test.";
+    exit;
+}
 
 my $pc = Pod::Coverage->new(package => 'Config::Trivial');
 ok($pc->coverage == 1);

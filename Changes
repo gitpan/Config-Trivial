@@ -1,6 +1,15 @@
-$Id: Changes,v 1.12 2007-05-28 17:36:26 adam Exp $
+$Id: Changes 54 2014-05-21 19:47:43Z adam $
 
 Revision history for Perl extension Config::Trivial
+
+0.80 Wed 21 May 2014
+    -   Add option to disable file test on very slow file systems (RT #95839)
+    -   Dependency update to later versions
+    -   Update to use later version of Perl (I no longer have access to older perls)
+    -   Correct test failure on Windows (possible fix RT #19049)
+    -   Using SVN instead of CVS
+    -   More tests
+    -   Simplified Build.PL and Makefile.PL
 
 0.70 Mon 28 May 2007
     -   Work on Test failures on Windows with Module::Build (thanks to Corion)

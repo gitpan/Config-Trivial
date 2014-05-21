@@ -1,4 +1,4 @@
-#	$Id: 03-error.t 51 2014-05-21 19:14:11Z adam $
+#	$Id: 03-skip-error.t 52 2014-05-21 19:46:02Z adam $
 use strict;
 use Test;
 
@@ -10,36 +10,37 @@ ok(1);
 #
 #	Basic Constructor
 #
-my $config = Config::Trivial->new;
+my $config = Config::Trivial->new( no_check => 'yes' );
 my @array=();
-my %hash = (file => "./t/file.that.is.not.there");
+my %hash = (file => './t/file.that.is.not.there');
 
 # Try and write to self (2-3)
 ok(! $config->write );
-ok($config->get_error(), "Not allowed to write to the calling file.");
+ok($config->get_error(), 'Not allowed to write to the calling file.');
 
 # Missing file (4-7)
-ok(! $config->set_config_file("./t/file.that.is.not.there")); 
-ok($config->get_error(), "File error: Cannot find ./t/file.that.is.not.there");
+ok($config->set_config_file('./t/file.that.is.not.there'));
+ok($config->get_error(), 'Not allowed to write to the calling file.');
 
-ok(! $config->set_config_file(\%hash));
-ok($config->get_error(), "File error: Cannot find ./t/file.that.is.not.there");
+ok($config->set_config_file(\%hash));
+ok($config->get_error(), 'Not allowed to write to the calling file.');
 
 # Not a file (8-11)
-ok(! $config->set_config_file("./t"));
-ok($config->get_error(), "File error: ./t isn't a real file");
+ok($config->set_config_file("./t"));
+ok($config->get_error(), 'Not allowed to write to the calling file.');
 
 %hash = (file => "./t");
-ok(! $config->set_config_file(\%hash));
-ok($config->get_error(), "File error: ./t isn't a real file");
+ok($config->set_config_file(\%hash));
+ok($config->get_error(), 'Not allowed to write to the calling file.');
 
 # Empty filename (12-19)
-ok(! $config->set_config_file(''));
-ok($config->get_error(), "File error: No file name supplied");
-ok(! $config->set_config_file(undef));
-ok($config->get_error(), "File error: No file name supplied");
-ok(! $config->write(config_file => undef));
-ok($config->get_error(), "Not allowed to write to the calling file.");
+ok( $config->set_config_file(''));
+ok($config->get_error(), 'Not allowed to write to the calling file.');
+ok($config->set_config_file(undef));
+ok($config->get_error(), 'Not allowed to write to the calling file.');
+eval { $config->write(config_file => undef) };
+ok( $@ =~ 'File error: No file name supplied at t/03-skip-error.t line' );
+ok($config->get_error(), 'Not allowed to write to the calling file.');
 $config->{_config_file} = '';
 eval { $config->write(config_file => undef) };
 ok($@ =~ 'File error: No file name supplied');
@@ -49,18 +50,18 @@ $config->{_config_file} = $0;
 ok(! $config->set_config_file(\%hash));
 ok($config->get_error(), "File error: No file name supplied");
 
-# Empty file (20-23)
-ok(! $config->set_config_file("./t/empty"));
-ok($config->get_error(), "File error: ./t/empty is zero bytes long");
+# Empty file, doen't generate and error and error is from previous (20-23)
+ok($config->set_config_file("./t/empty"));
+ok($config->get_error(), 'File error: No file name supplied');
 
 %hash = (file => "./t/empty");
-ok(! $config->set_config_file(\%hash));
-ok($config->get_error(), "File error: ./t/empty is zero bytes long");
+ok($config->set_config_file(\%hash));
+ok($config->get_error(), 'File error: No file name supplied');
 
 # write to self (24-25)
 $config->set_config_file($0);
 ok(! $config->write );
-ok($config->get_error(), "Not allowed to write to the calling file.");
+ok($config->get_error(), 'Not allowed to write to the calling file.');
 
 # duped keys, normal mode (22-24)
 ok($config->set_config_file("./t/bad.data"));

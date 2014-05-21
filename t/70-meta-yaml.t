@@ -1,4 +1,4 @@
-# $Id: 70-meta-yaml.t,v 1.1 2007-05-28 17:11:41 adam Exp $
+# $Id: 70-meta-yaml.t 51 2014-05-21 19:14:11Z adam $
 
 use strict;
 use Test;

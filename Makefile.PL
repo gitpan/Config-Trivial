@@ -1,28 +1,14 @@
-# $Id: Makefile.PL,v 1.5 2006-02-19 16:12:11 adam Exp $
+# $Id: Makefile.PL 52 2014-05-21 19:46:02Z adam $
 
 use ExtUtils::MakeMaker;
 use strict;
-use 5.006;
-
-my @tests;
-my $test_list = 't/00-use.t t/01-basic.t t/02-read.t t/03-error.t t/04-write.t';
-eval { require IO::Capture; };
-$test_list .= ' t/80-warn.t' unless ($@);
-eval { require Test::Pod; };
-$test_list .= ' t/90-pod.t' unless ($@);
-eval { require Pod::Coverage; };
-$test_list .= ' t/91-pod.t' unless ($@);
-eval { require Test::Pod::Coverage; };
-$test_list .= ' t/92-pod.t' unless ($@);
-
-push @tests, test => { TESTS => $test_list};
+use 5.010;
 
 WriteMakefile(
     'NAME'          => 'Config::Trivial',
     'VERSION_FROM'  => 'lib/Config/Trivial.pm',
-    'PREREQ_PM'     => {}, 
+    'PREREQ_PM'     => {},
 	'PL_FILES'      => {},
-	@tests,
      dist           => {
        COMPRESS      => 'gzip -9f',
        SUFFIX        => 'gz'
