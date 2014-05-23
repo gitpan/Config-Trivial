@@ -1,4 +1,4 @@
-#   $Id: Trivial.pm 48 2014-05-21 18:01:07Z adam $
+#   $Id: Trivial.pm 63 2014-05-23 09:42:15Z adam $
 
 package Config::Trivial;
 
@@ -8,7 +8,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '0.80';
+our $VERSION = '0.81';
 my ( $_package, $_file ) = caller;
 
 #
@@ -197,9 +197,9 @@ sub write {
 
     foreach my $setting ( keys %{$settings} ) {
         if ( $setting =~ / / ) {                    # Check for spaces in keys
-            croak "ERROR: Setting key \"$setting\" contains an illegal space"
+            croak qq{ERROR: Setting key "$setting" contains an illegal space}
                 if $self->{_strict};
-            carp "WARNING: Setting key \"$setting\" contains an illegal space"
+            carp qq{WARNING: Setting key "$setting" contains an illegal space}
                 if $self->{_debug};
             my $old_setting = $setting;
             $setting =~ s/ /_/g;
@@ -328,18 +328,18 @@ sub _process_line {
         ( $key, $value ) = split / /, $line, 2;
     }
     if ( $key ) {
-	no warnings "uninitialized";
+	    no warnings 'uninitialized';
         $key = lc _clean_string( $key );
     }
     if ( exists $self->{_configuration}->{$key} ) {
-        croak "ERROR: Duplicate key \"$key\" found in config file on line $line_no"
+        croak qq{ERROR: Duplicate key "$key" found in config file on line $line_no}
             if $self->{_strict};
-        carp "WARNING: Duplicate key \"$key\" found in config file on line $line_no"
+        carp qq{WARNING: Duplicate key "$key" found in config file on line $line_no}
             if $self->{_debug};
     }
-    if ($key) {
-        if (defined $value) {
-            if ($f_key) {
+    if ( $key ) {
+        if ( defined $value ) {
+            if ( $f_key ) {
                 $self->{_configuration}->{$f_key}->{$key} = $value;
             }
             else {
@@ -347,7 +347,7 @@ sub _process_line {
             }
         }
         else {
-            carp "WARNING: Key \"$key\" has no valid value, on line $line_no of the config file"
+            carp qq{WARNING: Key "$key" has no valid value, on line $line_no of the config file}
                 if $self->{_debug};
             $self->{_configuration}->{$key} = undef unless $self->{_strict};
         }
@@ -628,14 +628,14 @@ and L<Config::IniFiles>.
 
 =head1 LICENSE AND COPYRIGHT
 
-C<Config::Trivial>, Copyright iredale consulting 2004-2014
+C<Config::Trivial>, Copyright Adam John Trickett 2004-2014
 
 OSI Certified Open Source Software.
 Free Software Foundation Free Software.
 
 This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
+it under the terms of the GNU Lesser General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
@@ -643,7 +643,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
+You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 =cut

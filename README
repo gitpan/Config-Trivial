@@ -1,6 +1,6 @@
 $Id: README,v 1.7 2007-05-28 17:11:28 adam Exp $
 
-Config::Trivial Version 0.80
+Config::Trivial Version 0.81
 ============================
 
 This is "Yet Another" simple module to read (and write)

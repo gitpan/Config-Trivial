@@ -3,6 +3,7 @@ Changes
 examples/example.conf
 examples/example.pl
 lib/Config/Trivial.pm
+LICENCE
 Makefile.PL
 MANIFEST
 META.json

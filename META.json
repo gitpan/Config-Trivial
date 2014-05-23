@@ -25,7 +25,7 @@
       },
       "configure" : {
          "requires" : {
-            "Module::Build" : "0.40"
+            "Module::Build" : "0.4"
          }
       },
       "runtime" : {
@@ -37,14 +37,14 @@
    "provides" : {
       "Config::Trivial" : {
          "file" : "lib/Config/Trivial.pm",
-         "version" : "0.80"
+         "version" : "0.81"
       }
    },
    "release_status" : "stable",
    "resources" : {
       "license" : [
-         "http://www.gnu.org/licenses/old-licenses/gpl-1.0.txt"
+         "http://www.gnu.org/licenses/lgpl-3.0.txt"
       ]
    },
-   "version" : "0.80"
+   "version" : "0.81"
 }

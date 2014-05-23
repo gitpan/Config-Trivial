@@ -1,4 +1,4 @@
-#	$Id: 80-warn.t 51 2014-05-21 19:14:11Z adam $
+#	$Id: 80-warn.t 62 2014-05-23 09:41:11Z adam $
 
 use strict;
 use Test;
@@ -38,7 +38,7 @@ ok($capture->read =~ /WARNING: Duplicate key "test1" found in config file on lin
 $capture->start;
 $config->set_config_file("./t/file.that.is.not.there");
 $capture->stop;
-ok($capture->read =~ /File error: Cannot find \..t.file\.that\.is\.not\.there at t\/80-warn\.t line 39/);
+ok($capture->read =~ /File error: Cannot find \..t.file\.that\.is\.not\.there at t.80-warn\.t line 39/);
 
 # Empty file, Strict mode (7)
 $capture->start;

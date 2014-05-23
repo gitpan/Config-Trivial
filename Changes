@@ -1,6 +1,11 @@
-$Id: Changes 54 2014-05-21 19:47:43Z adam $
+$Id: Changes 63 2014-05-23 09:42:15Z adam $
 
 Revision history for Perl extension Config::Trivial
+
+0.81 Fri 23 May 2014
+    -   Minor test changes to accomodate Windows paths on tests (RT #95892)
+    -   No module changes
+    -   Added LICENCE file. Note module is now Lesser GPL not GPL
 
 0.80 Wed 21 May 2014
     -   Add option to disable file test on very slow file systems (RT #95839)
@@ -59,15 +64,15 @@ Revision history for Perl extension Config::Trivial
 0.20 Fri 16 Jan 2004
     -    Major redevelopment of code with OO interface.
     -    A number of functions from the original module
-        have been removed, or not yet re-implemented.
+         have been removed, or not yet re-implemented.
 
 As Config::SimpleConf
 
 0.10 Sat Apr 06 2002
     -    Added ability to work with a reference to a provided hash,
-        rather than just %settings.
-        Minor additions to the test script, and updates to the POD.
+         rather than just %settings.
+         Minor additions to the test script, and updates to the POD.
 
 0.08 Mon Nov 05 2001
     -    Dirty mode added, can now de-taint quite dirty data.
-        More small changes to the test script.
+         More small changes to the test script.
